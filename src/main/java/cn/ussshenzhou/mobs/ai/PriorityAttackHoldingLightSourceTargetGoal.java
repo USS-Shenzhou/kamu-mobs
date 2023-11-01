@@ -1,4 +1,4 @@
-package cn.ussshenzhou.mobs;
+package cn.ussshenzhou.mobs.ai;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Mob;

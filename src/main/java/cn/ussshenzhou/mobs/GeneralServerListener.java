@@ -1,5 +1,7 @@
 package cn.ussshenzhou.mobs;
 
+import cn.ussshenzhou.mobs.ai.AttractedByLightSourceGoal;
+import cn.ussshenzhou.mobs.ai.PriorityAttackHoldingLightSourceTargetGoal;
 import cn.ussshenzhou.mobs.mixin.NearestAttackableTargetGoalAccessor;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -10,7 +12,6 @@ import net.minecraft.world.entity.ai.goal.MoveTowardsTargetGoal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Rabbit;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -106,6 +107,19 @@ public class GeneralServerListener {
                 animal.getAttribute(Attributes.ARMOR).setBaseValue(4);
                 animal.goalSelector.addGoal(-2, new MeleeAttackGoal(animal, 1, true));
                 animal.goalSelector.addGoal(-1, new MoveTowardsTargetGoal(animal, 1, 32));
+            }
+        }
+    }
+
+    public static final HashSet<EntityType<? extends PathfinderMob>> ATTRACTED_BY_LIGHT = new HashSet<>() {{
+        addAll(List.of(ZOMBIE, DROWNED, HUSK, SKELETON, STRAY, SPIDER, CAVE_SPIDER, ZOMBIE_VILLAGER, CREEPER));
+    }};
+
+    @SubscribeEvent
+    public static void mobsAttractedByLight(EntityJoinLevelEvent event) {
+        if (!event.getLevel().isClientSide && event.getEntity() instanceof PathfinderMob mob) {
+            if (ATTRACTED_BY_LIGHT.contains(mob.getType())) {
+                mob.goalSelector.addGoal(5, new AttractedByLightSourceGoal(mob));
             }
         }
     }
