@@ -6,6 +6,8 @@
   "refmap": "mobs.refmap.json",
   "mixins": [
     "FoxMixin",
+    "NearestAttackableTargetGoalAccessor",
+    "TargetGoalAccessor",
     "TargetGoalMixin"
   ],
   "client": [
