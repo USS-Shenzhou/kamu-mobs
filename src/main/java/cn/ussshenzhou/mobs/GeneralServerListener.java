@@ -169,7 +169,7 @@ public class GeneralServerListener {
 
     @SuppressWarnings("SpellCheckingInspection")
     public static final HashSet<EntityType<? extends PathfinderMob>> JUMPABLE = new HashSet<>() {{
-        addAll(List.of(ZOMBIE, DROWNED, HUSK, ZOMBIE_VILLAGER));
+        addAll(List.of(ZOMBIE, HUSK, ZOMBIE_VILLAGER, ZOMBIFIED_PIGLIN, PIGLIN, PIGLIN_BRUTE));
     }};
 
     @SubscribeEvent

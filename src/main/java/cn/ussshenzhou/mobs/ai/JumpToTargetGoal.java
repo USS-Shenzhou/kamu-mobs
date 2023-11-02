@@ -1,16 +1,18 @@
 package cn.ussshenzhou.mobs.ai;
 
 import cn.ussshenzhou.mobs.GeneralServerListener;
+import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,9 +20,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.apache.commons.lang3.tuple.MutableTriple;
 
@@ -57,9 +57,9 @@ public class JumpToTargetGoal extends Goal {
     private final int forwardMovementTicks = 40; // How many ticks the entity will "press the forward key" while jumping
     private final List<Integer> anglesToAttemptJump = IntStream.rangeClosed(-45, 45).filter(i -> i % 5 == 0).boxed().toList();
     private final double edgeDetectionDistance = 2.0; // Maximum distance an entity can be from an edge before the AI considers running
-    private final int detectionPoints = (int) Math.floor(edgeDetectionDistance * 8);
+    private final int detectionPoints = (int) Math.floor(edgeDetectionDistance * 16);
     private final double moveSpeed = 1.0;
-    private final double moveFactor = 3.0;
+    private double jumpFactor = 3.0;
     private final double jumpForwardSpeed = 7.0;
     private final double gravity = 0.1;
     private final double yVelocityScale = 1.53;
@@ -204,6 +204,7 @@ public class JumpToTargetGoal extends Goal {
                 var dirAndVel = getJumpLength(pairs.getB().getA(), jumpDirection);
 
                 if (dirAndVel != null) {
+                    jumpFactor = Mth.clamp(entity.position().distanceTo(target), 1.1, 3.3);
                     return new JumpData(dirAndVel.getB(), dirAndVel.getA(), pairs.getB().getA());
                 }
             }
@@ -229,7 +230,7 @@ public class JumpToTargetGoal extends Goal {
         if (floorBlockPos(entity.position()).equals(floorBlockPos(jumpData.edgePos))) {
             jump(jumpData);
         } else {
-            entity.getMoveControl().setWantedPosition(jumpData.edgePos.x, jumpData.edgePos.y, jumpData.edgePos.z, moveSpeed);
+            entity.getMoveControl().setWantedPosition(jumpData.edgePos.x, jumpData.edgePos.y, jumpData.edgePos.z, moveSpeed * jumpFactor);
         }
     }
 
@@ -247,9 +248,9 @@ public class JumpToTargetGoal extends Goal {
         GeneralServerListener.TASKS.add(new GeneralServerListener.repeatableExecute<>(
                 shouldCancel, entity,
                 () -> {
-                    Vec3 movePos = entity.position().add(jumpData.direction.scale(3));
+                    Vec3 movePos = entity.position().add(jumpData.direction.scale(3 * jumpFactor));
                     if (!entity.onGround()) {
-                        entity.getMoveControl().setWantedPosition(movePos.x, movePos.y, movePos.z, jumpForwardSpeed);
+                        entity.getMoveControl().setWantedPosition(movePos.x, movePos.y, movePos.z, jumpForwardSpeed * jumpFactor);
                     }
                 }, forwardMovementTicks));
         entity.getNavigation().stop();
@@ -259,15 +260,15 @@ public class JumpToTargetGoal extends Goal {
     private MutableTriple<Double, Integer, Double> getMobJumpAbilities() {
         double jumpYVel = getJumpVelocity(entity.level(), entity); // Maximum y velocity for a jump. Used in determining if an entity can make a jump
         int maxJumpHeight = (int) (jumpYVel * 4);
-        double maxHorizontalVelocity = entity.getAttributeValue(Attributes.MOVEMENT_SPEED) * moveSpeed * moveFactor;
+        double maxHorizontalVelocity = entity.getAttributeValue(Attributes.MOVEMENT_SPEED) * moveSpeed * jumpFactor;
         return new MutableTriple<>(jumpYVel, maxJumpHeight, maxHorizontalVelocity);
     }
 
     private List<Tuple<Integer, Integer>> getJumpOffsets(double maxHorzVel) {
         int steps;
-        if (maxHorzVel < 0.24) {
+        if (maxHorzVel < 0.24 * jumpFactor) {
             steps = 3;
-        } else if (maxHorzVel > 0.24 && maxHorzVel < 0.3) {
+        } else if (maxHorzVel > 0.24 * jumpFactor && maxHorzVel < 0.3 * jumpFactor) {
             steps = 4;
         } else {
             steps = 5;
@@ -309,12 +310,11 @@ public class JumpToTargetGoal extends Goal {
             if (cornerPos == null) {
                 continue;
             }
-            cornerPos.add(asVec3(walkablePos));
+            cornerPos = cornerPos.add(asVec3(walkablePos));
 
             Vec3 horizontalJumpPos = new Vec3(cornerPos.x, actorPos.y, cornerPos.z);
 
             double jumpLength = horizontalJumpPos.subtract(actorPos).length() - (entity.getBbWidth() * 0.5);
-            //FIXME
             Vec3 recalculatedDirection = horizontalJumpPos.subtract(actorPos).normalize();
 
             if (!hasClearance(actorPos, jumpLength, targetDirection)) {
