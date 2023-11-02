@@ -17,6 +17,7 @@ import net.minecraft.world.entity.animal.Rabbit;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -175,7 +176,7 @@ public class GeneralServerListener {
     public static void addJumpGoal(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide && event.getEntity() instanceof PathfinderMob mob) {
             if (JUMPABLE.contains(mob.getType())) {
-                mob.goalSelector.addGoal(0, new JumpToTargetGoal(mob));
+                mob.goalSelector.addGoal(1, new JumpToTargetGoal(mob));
             }
         }
     }

@@ -26,6 +26,7 @@ import org.apache.commons.lang3.tuple.MutableTriple;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.Math.pow;
@@ -48,6 +49,7 @@ import static java.lang.Math.sqrt;
  * Spider navigation makes it so that spiders speed off in a straight direction
  * Jump calculations start to overestimate the distance with high velocities... mostly because Minecraft has a strangely high air resistance effect going on
  */
+@SuppressWarnings("AlibabaLowerCamelCaseVariableNaming")
 public class JumpToTargetGoal extends Goal {
     private final Mob entity;
     private final double minTargetDistance = 1.5; // Minimum distance required for the jump AI to activate
@@ -57,7 +59,8 @@ public class JumpToTargetGoal extends Goal {
     private final double edgeDetectionDistance = 2.0; // Maximum distance an entity can be from an edge before the AI considers running
     private final int detectionPoints = (int) Math.floor(edgeDetectionDistance * 8);
     private final double moveSpeed = 1.0;
-    private final double jumpForwardSpeed = 5.0;
+    private final double moveFactor = 3.0;
+    private final double jumpForwardSpeed = 7.0;
     private final double gravity = 0.1;
     private final double yVelocityScale = 1.53;
     private final double jumpNoise = 0.1;
@@ -150,7 +153,7 @@ public class JumpToTargetGoal extends Goal {
                 return false;
             }
 
-            Vec3 target = asVec3(entity.getNavigation().getTargetPos());
+            Vec3 target = asVec3(entity.getNavigation().getTargetPos()).add(0.5, 0, 0.5);
             if (target == null || target.distanceTo(entity.position()) < minTargetDistance) {
                 return false;
             }
@@ -166,8 +169,8 @@ public class JumpToTargetGoal extends Goal {
     }
 
     private JumpData findJump(Vec3 target) {
-        Vec3 targetDirection = target.subtract(entity.position()).subtract(0, entity.position().y, 0).normalize();
-
+        var v = new Vec3(0, 1, 0);
+        var targetDirection = target.subtract(entity.position()).subtract(v.scale(target.subtract(entity.position()).dot(v))).normalize();
         for (int angle : anglesToAttemptJump) {
             Vec3 jumpDirection = rotateVector(targetDirection, new Vec3(0, 1, 0), angle);
             List<Tuple<Vec3, BlockType>> gaps = new ArrayList<>();
@@ -179,30 +182,29 @@ public class JumpToTargetGoal extends Goal {
 
             lineCallback(entity.position(), endPos, detectionPoints, (pos, ignored) -> gaps.add(new Tuple<>(pos, getNode(floorBlockPos(pos)))));
 
-            Tuple<Tuple<Vec3, BlockType>, Tuple<Vec3, BlockType>> firstTuple = null;
-            Tuple<Tuple<Vec3, BlockType>, Tuple<Vec3, BlockType>> firstTupleWithGaps = null;
-            for (int i = 0; i < gaps.size(); i += 2) {
+            Tuple<Tuple<Vec3, BlockType>, Tuple<Vec3, BlockType>> pairs = null;
+            Tuple<Tuple<Vec3, BlockType>, Tuple<Vec3, BlockType>> hasGapsInARow = null;
+            for (int i = 0; i < gaps.size() - 1; i++) {
                 var o1 = gaps.get(i);
                 var o2 = gaps.get(i + 1);
                 if (o1.getB() == BlockType.WALKABLE && o2.getB() == BlockType.PASSABLE_OBSTACLE) {
-                    firstTuple = new Tuple<>(o1, o2);
+                    pairs = new Tuple<>(o1, o2);
                     break;
                 }
             }
-            for (int i = 0; i < gaps.size(); i += 2) {
+            for (int i = 0; i < gaps.size() - 1; i++) {
                 var o1 = gaps.get(i);
                 var o2 = gaps.get(i + 1);
                 if (o1.getB() == BlockType.WALKABLE && o2.getB() == BlockType.WALKABLE) {
-                    firstTupleWithGaps = new Tuple<>(o1, o2);
+                    hasGapsInARow = new Tuple<>(o1, o2);
                     break;
                 }
             }
-            //FIXME
-            if (firstTuple != null && firstTupleWithGaps != null) {
-                var dirAndVel = getJumpLength(firstTuple.getB().getA(), jumpDirection);
+            if (pairs != null && hasGapsInARow != null) {
+                var dirAndVel = getJumpLength(pairs.getB().getA(), jumpDirection);
 
                 if (dirAndVel != null) {
-                    return new JumpData(dirAndVel.getB(), dirAndVel.getA(), firstTuple.getB().getA());
+                    return new JumpData(dirAndVel.getB(), dirAndVel.getA(), pairs.getB().getA());
                 }
             }
         }
@@ -233,7 +235,7 @@ public class JumpToTargetGoal extends Goal {
 
     private void jump(JumpData jumpData) {
         Vec3 jumpDirection = entity.position().add(jumpData.direction);
-        double xVelocity = jumpData.jumpVel.getA() + jumpData.jumpVel.getA() * Math.random() * jumpNoise;
+        double xVelocity = jumpData.jumpVel.getA() + jumpData.jumpVel.getA() * (Math.random() - 0.5) * 2 * jumpNoise;
         double yVelocity = (jumpData.jumpVel.getB() > 0) ? 0.0 : 0.1;
         leapTowards(entity, jumpDirection, xVelocity, yVelocity);
 
@@ -243,12 +245,13 @@ public class JumpToTargetGoal extends Goal {
 
         Predicate<Mob> shouldCancel = mob -> !mob.isAlive() || mob.onGround();
         GeneralServerListener.TASKS.add(new GeneralServerListener.repeatableExecute<>(
-                shouldCancel, entity, () -> {
-            Vec3 movePos = entity.position().add(jumpData.direction.scale(3));
-            if (!entity.onGround()) {
-                entity.getMoveControl().setWantedPosition(movePos.x, movePos.y, movePos.z, jumpForwardSpeed);
-            }
-        }, forwardMovementTicks));
+                shouldCancel, entity,
+                () -> {
+                    Vec3 movePos = entity.position().add(jumpData.direction.scale(3));
+                    if (!entity.onGround()) {
+                        entity.getMoveControl().setWantedPosition(movePos.x, movePos.y, movePos.z, jumpForwardSpeed);
+                    }
+                }, forwardMovementTicks));
         entity.getNavigation().stop();
         this.jumpData = null;
     }
@@ -256,7 +259,7 @@ public class JumpToTargetGoal extends Goal {
     private MutableTriple<Double, Integer, Double> getMobJumpAbilities() {
         double jumpYVel = getJumpVelocity(entity.level(), entity); // Maximum y velocity for a jump. Used in determining if an entity can make a jump
         int maxJumpHeight = (int) (jumpYVel * 4);
-        double maxHorizontalVelocity = entity.getAttributeValue(Attributes.MOVEMENT_SPEED) * moveSpeed;
+        double maxHorizontalVelocity = entity.getAttributeValue(Attributes.MOVEMENT_SPEED) * moveSpeed * moveFactor;
         return new MutableTriple<>(jumpYVel, maxJumpHeight, maxHorizontalVelocity);
     }
 
@@ -301,18 +304,17 @@ public class JumpToTargetGoal extends Goal {
             var walkablePos = new BlockPos(blockPos.getX(), groundHeight, blockPos.getZ());
             //BlockType blockType = getNode(walkablePos);
             var blockShape = entity.level().getBlockState(walkablePos).getCollisionShape(entity.level(), walkablePos);
-
             var offsetPos = actorPos.subtract(asVec3(walkablePos));
             var cornerPos = findClosestCorner(offsetPos, blockShape, 16);
-            if (cornerPos != null) {
-                cornerPos.add(asVec3(walkablePos));
-            } else {
+            if (cornerPos == null) {
                 continue;
             }
+            cornerPos.add(asVec3(walkablePos));
 
             Vec3 horizontalJumpPos = new Vec3(cornerPos.x, actorPos.y, cornerPos.z);
 
             double jumpLength = horizontalJumpPos.subtract(actorPos).length() - (entity.getBbWidth() * 0.5);
+            //FIXME
             Vec3 recalculatedDirection = horizontalJumpPos.subtract(actorPos).normalize();
 
             if (!hasClearance(actorPos, jumpLength, targetDirection)) {
@@ -453,10 +455,10 @@ public class JumpToTargetGoal extends Goal {
         Vec3 horzVelocity = entity.getDeltaMovement().add(leap.x, 0.0, leap.z);
         double scale = horzVel / horzVelocity.length();
         if (scale < 1) {
-            horzVelocity = horzVelocity.scale(scale);
+            horzVelocity.scale(scale);
         }
-
-        entity.setDeltaMovement(horzVelocity.add(0, clampedYVelocity, 0));
+        horzVelocity.add(0, clampedYVelocity, 0);
+        entity.setDeltaMovement(horzVelocity);
     }
 
     public static BlockType getBlockType(BlockGetter world, BlockPos pos, int callsLeft) {
@@ -497,9 +499,10 @@ public class JumpToTargetGoal extends Goal {
     }
 
     public static Vec3 findClosestCorner(Vec3 point, VoxelShape shape, int maxSamples) {
-        return shape.toAabbs().stream()
-                .flatMap(box -> getTopCornersAndEdges(box).stream())
-                .sorted(Comparator.comparingDouble(a -> a.distanceToSqr(point)))
+        var l = shape.toAabbs().stream()
+                .flatMap(box -> getTopCornersAndEdges(box).stream()).collect(Collectors.toList());
+        Collections.shuffle(l);
+        return l.stream()
                 .limit(maxSamples)
                 .min(Comparator.comparingDouble(a -> a.distanceToSqr(point)))
                 .orElse(null);
