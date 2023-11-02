@@ -1,6 +1,7 @@
 package cn.ussshenzhou.mobs;
 
 import cn.ussshenzhou.mobs.ai.AttractedByLightSourceGoal;
+import cn.ussshenzhou.mobs.ai.JumpToTargetGoal;
 import cn.ussshenzhou.mobs.ai.PriorityAttackHoldingLightSourceTargetGoal;
 import cn.ussshenzhou.mobs.mixin.NearestAttackableTargetGoalAccessor;
 import net.minecraft.world.entity.EntityType;
@@ -14,12 +15,16 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Rabbit;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static net.minecraft.world.entity.EntityType.*;
 
@@ -120,6 +125,57 @@ public class GeneralServerListener {
         if (!event.getLevel().isClientSide && event.getEntity() instanceof PathfinderMob mob) {
             if (ATTRACTED_BY_LIGHT.contains(mob.getType())) {
                 mob.goalSelector.addGoal(5, new AttractedByLightSourceGoal(mob));
+            }
+        }
+    }
+
+    public static final LinkedList<repeatableExecute<?>> TASKS = new LinkedList<>();
+
+    @SubscribeEvent
+    public static void serverTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            Iterator<repeatableExecute<?>> iterator = TASKS.iterator();
+            while (iterator.hasNext()) {
+                repeatableExecute<?> task = iterator.next();
+                task.tick();
+                if (task.duration <= 0) {
+                    iterator.remove();
+                }
+            }
+        }
+    }
+
+    public static class repeatableExecute<T> {
+        Runnable task;
+        int duration;
+        Predicate<T> checker;
+        T checked;
+
+        public repeatableExecute(Predicate<T> checker, T checked, Runnable task, int duration) {
+            this.task = task;
+            this.duration = duration;
+            this.checker = checker;
+            this.checked = checked;
+        }
+
+        public void tick() {
+            if (checker.test(checked)) {
+                task.run();
+                duration--;
+            }
+        }
+    }
+
+    @SuppressWarnings("SpellCheckingInspection")
+    public static final HashSet<EntityType<? extends PathfinderMob>> JUMPABLE = new HashSet<>() {{
+        addAll(List.of(ZOMBIE, DROWNED, HUSK, ZOMBIE_VILLAGER));
+    }};
+
+    @SubscribeEvent
+    public static void addJumpGoal(EntityJoinLevelEvent event) {
+        if (!event.getLevel().isClientSide && event.getEntity() instanceof PathfinderMob mob) {
+            if (JUMPABLE.contains(mob.getType())) {
+                mob.goalSelector.addGoal(0, new JumpToTargetGoal(mob));
             }
         }
     }
