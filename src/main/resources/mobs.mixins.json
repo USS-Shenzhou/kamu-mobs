@@ -10,6 +10,7 @@
     "TargetGoalMixin"
   ],
   "client": [
+    "LevelRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
