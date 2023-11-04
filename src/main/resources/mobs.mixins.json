@@ -6,6 +6,8 @@
   "refmap": "mobs.refmap.json",
   "mixins": [
     "FoxMixin",
+    "MobCategoryMixin",
+    "NaturalSpawnerMixin",
     "NearestAttackableTargetGoalAccessor",
     "TargetGoalMixin"
   ],
