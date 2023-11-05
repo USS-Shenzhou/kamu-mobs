@@ -138,6 +138,9 @@ public class JumpToTargetGoal extends Goal {
             if (entity.getNavigation().getPath() == null) {
                 return false;
             }
+            if (entity.getTarget() == null) {
+                return false;
+            }
 
             List<BlockType> obstacles = new ArrayList<>();
             for (int i = entity.getNavigation().getPath().getNextNodeIndex(); i < entity.getNavigation().getPath().getNodeCount(); i++) {

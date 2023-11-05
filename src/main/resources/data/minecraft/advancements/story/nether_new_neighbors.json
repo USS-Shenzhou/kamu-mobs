@@ -1,0 +1,31 @@
+{
+  "criteria": {
+    "custom": {
+      "conditions": {
+        "to": "minecraft:the_nether"
+      },
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "mobs.eastern_egg"
+    },
+    "frame": "task",
+    "hidden": true,
+    "icon": {
+      "item": "minecraft:pink_bed"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "mobs.advancements.new_neighbors"
+    }
+  },
+  "requirements": [
+    [
+      "custom"
+    ]
+  ],
+  "sends_telemetry_event": false
+}

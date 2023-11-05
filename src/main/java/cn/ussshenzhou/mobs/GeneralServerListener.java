@@ -2,6 +2,9 @@ package cn.ussshenzhou.mobs;
 
 import cn.ussshenzhou.mobs.ai.*;
 import cn.ussshenzhou.mobs.mixin.NearestAttackableTargetGoalAccessor;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
@@ -18,11 +21,15 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.gametest.ForgeGameTestHooks;
+import org.apache.logging.log4j.core.jmx.Server;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -38,7 +45,6 @@ public class GeneralServerListener {
         addAll(List.of(BEE, DOLPHIN, FOX, IRON_GOLEM, LLAMA, TRADER_LLAMA, WOLF, PANDA, POLAR_BEAR,
                 SPIDER, CAVE_SPIDER, ZOMBIFIED_PIGLIN));
     }};
-
     public static final HashSet<EntityType<? extends Mob>> FRIENDLY_TO_HOSTILE1 = new HashSet<>() {{
         addAll(List.of(CAMEL, COW, DONKEY, HORSE, MOOSHROOM, PIG, SHEEP, SKELETON_HORSE, TURTLE, SNIFFER,
                 BAT, CHICKEN, COD, SQUID, GLOW_SQUID, PARROT, SALMON, TROPICAL_FISH, STRIDER, VILLAGER, WANDERING_TRADER));
@@ -55,6 +61,42 @@ public class GeneralServerListener {
     public static final HashSet<EntityType<? extends PathfinderMob>> BREAK_BLOCK = new HashSet<>() {{
         addAll(List.of(ZOMBIE, HUSK));
     }};
+    public static final List<MobSpawnSettings.SpawnerData> ALL_SPAWNER_DATA = new ArrayList<>();
+    public static final HashMap<EntityType<?>, Integer> ALL_POTENTIAL_SPAWNS = new HashMap<>();
+
+    static {
+        putAllPotential(80, CREEPER, SKELETON, ZOMBIE, SPIDER);
+        putAllPotential(60, PILLAGER, STRAY, HUSK, VINDICATOR);
+        putAllPotential(30, DROWNED, SILVERFISH, ZOMBIFIED_PIGLIN);
+        putAllPotential(5, EVOKER, WITCH, WITHER_SKELETON, RAVAGER, ILLUSIONER, SLIME);
+        ALL_POTENTIAL_SPAWNS.forEach((type, weight) -> ALL_SPAWNER_DATA.add(spawnerData(type, weight)));
+    }
+
+    public static final List<MobSpawnSettings.SpawnerData> OVER_WORLD_SPAWNER_DATA = new ArrayList<>();
+    public static final HashMap<EntityType<?>, Integer> OVER_WORLD_POTENTIAL_SPAWNS = new HashMap<>();
+
+    static {
+        putAdditionalPotential(OVER_WORLD_POTENTIAL_SPAWNS, 20, SHULKER);
+        OVER_WORLD_POTENTIAL_SPAWNS.forEach((type, weight) -> OVER_WORLD_SPAWNER_DATA.add(spawnerData(type, weight)));
+    }
+
+    public static final List<MobSpawnSettings.SpawnerData> NETHER_SPAWNER_DATA = new ArrayList<>();
+    public static final HashMap<EntityType<?>, Integer> NETHER_POTENTIAL_SPAWNS = new HashMap<>();
+
+    static {
+        putAdditionalPotential(NETHER_POTENTIAL_SPAWNS, 50, HOGLIN, ZOMBIFIED_PIGLIN);
+        putAdditionalPotential(NETHER_POTENTIAL_SPAWNS, 20, PIGLIN_BRUTE);
+        NETHER_POTENTIAL_SPAWNS.forEach((type, weight) -> NETHER_SPAWNER_DATA.add(spawnerData(type, weight)));
+    }
+
+    public static final List<MobSpawnSettings.SpawnerData> END_SPAWNER_DATA = new ArrayList<>();
+    public static final HashMap<EntityType<?>, Integer> END_POTENTIAL_SPAWNS = new HashMap<>();
+
+    static {
+        putAdditionalPotential(END_POTENTIAL_SPAWNS, 500, ENDERMAN);
+        putAdditionalPotential(END_POTENTIAL_SPAWNS, 100, SHULKER);
+        END_POTENTIAL_SPAWNS.forEach((type, weight) -> END_SPAWNER_DATA.add(spawnerData(type, weight)));
+    }
 
     @SubscribeEvent
     public static void modifyNeutralToHostile(EntityJoinLevelEvent event) {
@@ -143,7 +185,7 @@ public class GeneralServerListener {
 
     @SubscribeEvent
     public static void mobsAttractedByLight(EntityJoinLevelEvent event) {
-        if (!event.getLevel().isClientSide && event.getEntity() instanceof PathfinderMob mob) {
+        if (!event.getLevel().isClientSide && event.getLevel().dimension() != Level.NETHER && event.getEntity() instanceof PathfinderMob mob) {
             if (ATTRACTED_BY_LIGHT.contains(mob.getType())) {
                 mob.goalSelector.addGoal(5, new AttractedByLightSourceGoal(mob));
             }
@@ -212,46 +254,6 @@ public class GeneralServerListener {
         GeneralServerListener.putAll(20, EVOKER, SHULKER, WITCH, WITHER_SKELETON, ZOGLIN);
     }};*/
 
-    public static final List<MobSpawnSettings.SpawnerData> ALL_SPAWNER_DATA = new ArrayList<>();
-
-    public static final HashMap<EntityType<?>, Integer> ALL_POTENTIAL_SPAWNS = new HashMap<>();
-
-    static {
-        putAllPotential(80, CREEPER, SKELETON, ZOMBIE, SPIDER);
-        putAllPotential(60, PILLAGER, STRAY, HUSK, VINDICATOR);
-        putAllPotential(30, DROWNED, SILVERFISH, ZOMBIFIED_PIGLIN);
-        putAllPotential(5, EVOKER, WITCH, WITHER_SKELETON, RAVAGER, ILLUSIONER, SLIME);
-        ALL_POTENTIAL_SPAWNS.forEach((type, weight) -> ALL_SPAWNER_DATA.add(spawnerData(type, weight)));
-    }
-
-    public static final List<MobSpawnSettings.SpawnerData> OVER_WORLD_SPAWNER_DATA = new ArrayList<>();
-
-    public static final HashMap<EntityType<?>, Integer> OVER_WORLD_POTENTIAL_SPAWNS = new HashMap<>();
-
-    static {
-        putAdditionalPotential(OVER_WORLD_POTENTIAL_SPAWNS, 20, SHULKER);
-        OVER_WORLD_POTENTIAL_SPAWNS.forEach((type, weight) -> OVER_WORLD_SPAWNER_DATA.add(spawnerData(type, weight)));
-    }
-
-    public static final List<MobSpawnSettings.SpawnerData> NETHER_SPAWNER_DATA = new ArrayList<>();
-
-    public static final HashMap<EntityType<?>, Integer> NETHER_POTENTIAL_SPAWNS = new HashMap<>();
-
-    static {
-        putAdditionalPotential(NETHER_POTENTIAL_SPAWNS, 50, HOGLIN, PIGLIN_BRUTE, ZOMBIFIED_PIGLIN);
-        NETHER_POTENTIAL_SPAWNS.forEach((type, weight) -> NETHER_SPAWNER_DATA.add(spawnerData(type, weight)));
-    }
-
-    public static final List<MobSpawnSettings.SpawnerData> END_SPAWNER_DATA = new ArrayList<>();
-
-    public static final HashMap<EntityType<?>, Integer> END_POTENTIAL_SPAWNS = new HashMap<>();
-
-    static {
-        putAdditionalPotential(END_POTENTIAL_SPAWNS, 500, ENDERMAN);
-        putAdditionalPotential(END_POTENTIAL_SPAWNS, 100, SHULKER);
-        END_POTENTIAL_SPAWNS.forEach((type, weight) -> END_SPAWNER_DATA.add(spawnerData(type, weight)));
-    }
-
     private static void putAllPotential(int weight, EntityType<?>... types) {
         Arrays.stream(types).forEach(t -> ALL_POTENTIAL_SPAWNS.put(t, weight));
     }
@@ -300,6 +302,29 @@ public class GeneralServerListener {
         }
         if (biome.is(Tags.Biomes.IS_WATER)) {
             list.add(spawnerData(GUARDIAN, 40));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        var level = event.getEntity().level();
+        if (level.isClientSide()) {
+            return;
+        }
+        var player = (ServerPlayer) event.getEntity();
+        checkAndAward(event, player, "KaMuaMua", "nether_new_neighbors", (e, p) -> e.getTo() == Level.NETHER);
+        checkAndAward(event, player, "BadCen", "end_new_neighbors", (e, p) -> e.getTo() == Level.END);
+    }
+
+    private static <T> void checkAndAward(T context, ServerPlayer player, String playerName, String advancementName, BiPredicate<T, ServerPlayer> predicate) {
+        var n = player.getGameProfile().getName();
+        if (n.equals(playerName) || "Dev".equals(n)) {
+            if (predicate.test(context, player)) {
+                var a = player.serverLevel().getServer().getAdvancements().getAdvancement(new ResourceLocation("minecraft:story/" + advancementName));
+                if (a != null) {
+                    player.getAdvancements().award(a, "custom");
+                }
+            }
         }
     }
 }
