@@ -3,8 +3,11 @@ package cn.ussshenzhou.mobs;
 import cn.ussshenzhou.mobs.ai.*;
 import cn.ussshenzhou.mobs.mixin.NearestAttackableTargetGoalAccessor;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
@@ -21,6 +24,8 @@ import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -41,7 +46,7 @@ import static net.minecraft.world.entity.EntityType.*;
  */
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class GeneralServerListener {
-    private static final HashSet<EntityType<?>> NEUTRAL_TO_HOSTILE = new HashSet<>() {{
+    public static final HashSet<EntityType<?>> NEUTRAL_TO_HOSTILE = new HashSet<>() {{
         addAll(List.of(BEE, DOLPHIN, FOX, IRON_GOLEM, LLAMA, TRADER_LLAMA, WOLF, PANDA, POLAR_BEAR,
                 SPIDER, CAVE_SPIDER, ZOMBIFIED_PIGLIN));
     }};
@@ -50,7 +55,7 @@ public class GeneralServerListener {
                 BAT, CHICKEN, COD, SQUID, GLOW_SQUID, PARROT, SALMON, TROPICAL_FISH, STRIDER, VILLAGER, WANDERING_TRADER));
     }};
     public static final HashSet<EntityType<?>> FRIENDLY_TO_HOSTILE2 = new HashSet<>() {{
-        addAll(List.of(CAT, OCELOT, SNOW_GOLEM, FROG, AXOLOTL));
+        addAll(List.of(CAT, OCELOT, SNOW_GOLEM));
     }};
     public static final HashSet<EntityType<? extends PathfinderMob>> ATTRACTED_BY_LIGHT = new HashSet<>() {{
         addAll(List.of(ZOMBIE, DROWNED, HUSK, SKELETON, STRAY, SPIDER, CAVE_SPIDER, ZOMBIE_VILLAGER, CREEPER));
@@ -325,6 +330,26 @@ public class GeneralServerListener {
                     player.getAdvancements().award(a, "custom");
                 }
             }
+        }
+    }
+
+    public static final HashSet<ResourceKey<DamageType>> HEAVIER_DAMAGE = new HashSet<>() {{
+        addAll(List.of(DamageTypes.MOB_ATTACK, DamageTypes.MOB_ATTACK_NO_AGGRO, DamageTypes.MOB_PROJECTILE));
+    }};
+
+    @SubscribeEvent
+    public static void onPlayerHurt(LivingHurtEvent event) {
+        if (event.getEntity() instanceof ServerPlayer) {
+            if (HEAVIER_DAMAGE.stream().anyMatch(damageTypeResourceKey -> event.getSource().is(damageTypeResourceKey))) {
+                event.setAmount(event.getAmount() * 2);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerKnockBack(LivingKnockBackEvent event) {
+        if (event.getEntity() instanceof ServerPlayer) {
+            event.setStrength(event.getStrength() + 1.5f);
         }
     }
 }
