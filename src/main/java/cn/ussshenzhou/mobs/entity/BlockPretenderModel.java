@@ -114,6 +114,9 @@ public class BlockPretenderModel<T extends BlockPretenderEntity> extends Hierarc
 
     @Override
     public void setupAnim(T pEntity, float pLimbSwing, float pLimbSwingAmount, float pAgeInTicks, float pNetHeadYaw, float pHeadPitch) {
-
+        root().getAllParts().forEach(ModelPart::resetPose);
+        if (!pEntity.isInWaterOrBubble()) {
+            animateWalk(BlockPretenderAnimation.WALK, pLimbSwing, pLimbSwingAmount, 2.5f, 2.5f);
+        }
     }
 }
