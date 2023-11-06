@@ -1,7 +1,10 @@
 package cn.ussshenzhou.mobs;
 
 import cn.ussshenzhou.mobs.entity.BlockPretenderEntity;
+import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
@@ -20,7 +23,12 @@ public class GeneralModBusListener {
     }
 
     @SubscribeEvent
-    public static void addAttribute(EntityAttributeCreationEvent event){
+    public static void addAttribute(EntityAttributeCreationEvent event) {
         event.put(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), BlockPretenderEntity.createAttributes().build());
+    }
+
+    @SubscribeEvent
+    public static void addSpawn(SpawnPlacementRegisterEvent event) {
+        event.register(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BlockPretenderEntity::canSpawn, SpawnPlacementRegisterEvent.Operation.OR);
     }
 }

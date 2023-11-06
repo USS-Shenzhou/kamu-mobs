@@ -66,8 +66,9 @@ public class GeneralForgeBusListener {
     public static final HashMap<EntityType<?>, Integer> ALL_POTENTIAL_SPAWNS = new HashMap<>();
 
     static {
-        putAllPotential(80, CREEPER, SKELETON, ZOMBIE, SPIDER);
-        putAllPotential(60, PILLAGER, STRAY, HUSK, VINDICATOR);
+        putAllPotential(70, CREEPER, SKELETON, ZOMBIE, SPIDER);
+        putAllPotential(60, STRAY, HUSK, VINDICATOR);
+        putAllPotential(45, PILLAGER);
         putAllPotential(30, DROWNED, SILVERFISH, ZOMBIFIED_PIGLIN);
         putAllPotential(5, EVOKER, WITCH, WITHER_SKELETON, RAVAGER, ILLUSIONER);
         ALL_POTENTIAL_SPAWNS.forEach((type, weight) -> ALL_SPAWNER_DATA.add(spawnerData(type, weight)));
@@ -98,6 +99,8 @@ public class GeneralForgeBusListener {
         putAdditionalPotential(END_POTENTIAL_SPAWNS, 100, SHULKER);
         END_POTENTIAL_SPAWNS.forEach((type, weight) -> END_SPAWNER_DATA.add(spawnerData(type, weight)));
     }
+
+    private static MobSpawnSettings.SpawnerData BLOCK_PRETENDER = null;
 
     @SubscribeEvent
     public static void modifyNeutralToHostile(EntityJoinLevelEvent event) {
@@ -280,8 +283,6 @@ public class GeneralForgeBusListener {
                 .filter(spawnerData -> !nativeTypes.contains(spawnerData.type))
                 .forEach(event::addSpawnerData);
 
-        event.addSpawnerData(spawnerData(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), 5));
-
         var level = event.getLevel();
         if (((Level) level).dimension() == Level.OVERWORLD) {
             OVER_WORLD_SPAWNER_DATA.stream()
@@ -301,10 +302,10 @@ public class GeneralForgeBusListener {
         var pos = event.getPos();
         var biome = level.getBiome(pos);
         if (biome.is(Tags.Biomes.IS_CAVE)) {
-            list.add(spawnerData(CAVE_SPIDER, 40));
+            event.addSpawnerData(spawnerData(CAVE_SPIDER, 40));
         }
         if (biome.is(Tags.Biomes.IS_WATER)) {
-            list.add(spawnerData(GUARDIAN, 40));
+            event.addSpawnerData(spawnerData(GUARDIAN, 40));
         }
     }
 
