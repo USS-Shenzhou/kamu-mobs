@@ -2,7 +2,6 @@ package cn.ussshenzhou.mobs;
 
 import cn.ussshenzhou.mobs.ai.*;
 import cn.ussshenzhou.mobs.mixin.NearestAttackableTargetGoalAccessor;
-import net.minecraft.advancements.Advancement;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,13 +29,10 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.gametest.ForgeGameTestHooks;
-import org.apache.logging.log4j.core.jmx.Server;
 
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static net.minecraft.world.entity.EntityType.*;
@@ -45,7 +41,7 @@ import static net.minecraft.world.entity.EntityType.*;
  * @author USS_Shenzhou
  */
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class GeneralServerListener {
+public class GeneralForgeBusListener {
     public static final HashSet<EntityType<?>> NEUTRAL_TO_HOSTILE = new HashSet<>() {{
         addAll(List.of(BEE, DOLPHIN, FOX, IRON_GOLEM, LLAMA, TRADER_LLAMA, WOLF, PANDA, POLAR_BEAR,
                 SPIDER, CAVE_SPIDER, ZOMBIFIED_PIGLIN));
@@ -73,7 +69,7 @@ public class GeneralServerListener {
         putAllPotential(80, CREEPER, SKELETON, ZOMBIE, SPIDER);
         putAllPotential(60, PILLAGER, STRAY, HUSK, VINDICATOR);
         putAllPotential(30, DROWNED, SILVERFISH, ZOMBIFIED_PIGLIN);
-        putAllPotential(5, EVOKER, WITCH, WITHER_SKELETON, RAVAGER, ILLUSIONER, SLIME);
+        putAllPotential(5, EVOKER, WITCH, WITHER_SKELETON, RAVAGER, ILLUSIONER);
         ALL_POTENTIAL_SPAWNS.forEach((type, weight) -> ALL_SPAWNER_DATA.add(spawnerData(type, weight)));
     }
 
@@ -283,6 +279,8 @@ public class GeneralServerListener {
         ALL_SPAWNER_DATA.stream()
                 .filter(spawnerData -> !nativeTypes.contains(spawnerData.type))
                 .forEach(event::addSpawnerData);
+
+        event.addSpawnerData(spawnerData(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), 5));
 
         var level = event.getLevel();
         if (((Level) level).dimension() == Level.OVERWORLD) {

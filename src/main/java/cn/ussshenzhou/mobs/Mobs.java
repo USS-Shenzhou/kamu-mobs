@@ -1,8 +1,12 @@
 package cn.ussshenzhou.mobs;
 
+import cn.ussshenzhou.mobs.entity.BlockPretenderEntity;
+import com.mojang.datafixers.DSL;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -32,16 +36,21 @@ import org.slf4j.Logger;
 /**
  * @author USS_Shenzhou
  */
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod(Mobs.MODID)
 public class Mobs {
 
-    // Define mod id in a common place for everything to reference
     public static final String MODID = "mobs";
+
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MODID);
+    public static final RegistryObject<EntityType<BlockPretenderEntity>> BLOCK_PRETENDER_ENTITY_TYPE = ENTITY_TYPES.register("block_pretender",
+            () -> EntityType.Builder.of(BlockPretenderEntity::new, MobCategory.MONSTER)
+                    .sized(1, 1)
+                    .build("block_pretender")
+    );
 
     public Mobs() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+        ENTITY_TYPES.register(modEventBus);
     }
 }

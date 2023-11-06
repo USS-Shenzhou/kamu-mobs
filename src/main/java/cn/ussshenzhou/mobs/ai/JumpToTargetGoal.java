@@ -1,6 +1,6 @@
 package cn.ussshenzhou.mobs.ai;
 
-import cn.ussshenzhou.mobs.GeneralServerListener;
+import cn.ussshenzhou.mobs.GeneralForgeBusListener;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
@@ -248,7 +248,7 @@ public class JumpToTargetGoal extends Goal {
         }
 
         Predicate<Mob> shouldCancel = mob -> !mob.isAlive() || mob.onGround();
-        GeneralServerListener.TASKS.add(new GeneralServerListener.repeatableExecute<>(
+        GeneralForgeBusListener.TASKS.add(new GeneralForgeBusListener.repeatableExecute<>(
                 shouldCancel, entity,
                 () -> {
                     Vec3 movePos = entity.position().add(jumpData.direction.scale(3 * jumpFactor));
