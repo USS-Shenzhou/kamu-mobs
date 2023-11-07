@@ -1,11 +1,9 @@
 package cn.ussshenzhou.mobs.ai;
 
-import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.LightLayer;
-import org.joml.Vector3f;
 
 import java.util.EnumSet;
 
