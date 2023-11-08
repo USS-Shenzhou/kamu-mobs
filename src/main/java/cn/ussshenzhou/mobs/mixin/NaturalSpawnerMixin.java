@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.ForgeEventFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -108,7 +109,8 @@ public abstract class NaturalSpawnerMixin {
 
                                 mob.moveTo(d0, (double) i, d1, pLevel.random.nextFloat() * 360.0F, 0.0F);
                                 if (isValidPositionForMob(pLevel, mob, d2)) {
-                                    spawngroupdata = mob.finalizeSpawn(pLevel, pLevel.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.NATURAL, spawngroupdata, (CompoundTag) null);
+                                    //spawngroupdata = mob.finalizeSpawn(pLevel, pLevel.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.NATURAL, spawngroupdata, (CompoundTag) null);
+                                    spawngroupdata = ForgeEventFactory.onFinalizeSpawn(mob, pLevel, pLevel.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.NATURAL, spawngroupdata, null);
                                     ++j;
                                     ++l1;
                                     pLevel.addFreshEntityWithPassengers(mob);

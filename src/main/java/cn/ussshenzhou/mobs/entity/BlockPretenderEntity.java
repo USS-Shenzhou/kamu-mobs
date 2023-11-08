@@ -70,15 +70,29 @@ public class BlockPretenderEntity extends PathfinderMob {
     @Override
     public void tick() {
         super.tick();
-        if (!level().isClientSide() && tickCount % 10 == 0 && random.nextFloat() < 0.2) {
-            var player = level().getNearestPlayer(TargetingConditions.DEFAULT, this, this.getX(), this.getEyeY(), this.getZ());
-            if (player != null && this.getEyePosition().distanceToSqr(player.position()) <= 9) {
-                if (getEntityData().get(PRETENDING)) {
-                    this.activate();
+        if (!level().isClientSide()) {
+            if (tickCount % 10 == 0 && random.nextFloat() < 0.2) {
+                var player = level().getNearestPlayer(TargetingConditions.DEFAULT, this, this.getX(), this.getEyeY(), this.getZ());
+                if (player != null && this.getEyePosition().distanceToSqr(player.position()) <= 9) {
+                    if (getEntityData().get(PRETENDING)) {
+                        this.activate();
+                    }
+                }
+            }
+            if (activating) {
+                if (getTarget() != null) {
+                    var pos = this.blockPosition().below();
+                    var state = level().getBlockState(pos);
+                    this.playSound(state.getSoundType().getBreakSound(), 1, 1);
+                    level().levelEvent(2001, this.blockPosition(), Block.getId(state));
+                    getEntityData().set(PRETENDING, false);
+                    activating = false;
                 }
             }
         }
     }
+
+    private boolean activating = false;
 
     @Override
     public boolean hurt(DamageSource pSource, float pAmount) {
@@ -92,12 +106,8 @@ public class BlockPretenderEntity extends PathfinderMob {
     }
 
     private void activate() {
-        var pos = this.blockPosition().below();
-        var state = level().getBlockState(pos);
-        this.playSound(state.getSoundType().getBreakSound(), 1, 1);
-        level().levelEvent(2001, this.blockPosition(), Block.getId(state));
-        getEntityData().set(PRETENDING, false);
         TARGET_GOALS.forEach(this.targetSelector::addGoal);
+        activating = true;
     }
 
     @Override

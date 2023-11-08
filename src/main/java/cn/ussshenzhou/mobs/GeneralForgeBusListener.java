@@ -86,8 +86,8 @@ public class GeneralForgeBusListener {
     public static final HashMap<EntityType<?>, Integer> NETHER_POTENTIAL_SPAWNS = new HashMap<>();
 
     static {
-        putAdditionalPotential(NETHER_POTENTIAL_SPAWNS, 50, HOGLIN, ZOMBIFIED_PIGLIN);
-        putAdditionalPotential(NETHER_POTENTIAL_SPAWNS, 20, PIGLIN_BRUTE);
+        putAdditionalPotential(NETHER_POTENTIAL_SPAWNS, 20, HOGLIN, ZOMBIFIED_PIGLIN);
+        putAdditionalPotential(NETHER_POTENTIAL_SPAWNS, 5, PIGLIN_BRUTE);
         NETHER_POTENTIAL_SPAWNS.forEach((type, weight) -> NETHER_SPAWNER_DATA.add(spawnerData(type, weight)));
     }
 
@@ -286,16 +286,15 @@ public class GeneralForgeBusListener {
         var level = event.getLevel();
         if (((Level) level).dimension() == Level.OVERWORLD) {
             OVER_WORLD_SPAWNER_DATA.stream()
-                    //.filter(spawnerData -> !nativeTypes.contains(spawnerData.type))
+                    .filter(spawnerData -> !nativeTypes.contains(spawnerData.type))
                     .forEach(event::addSpawnerData);
         } else if (((Level) level).dimension() == Level.NETHER) {
             NETHER_SPAWNER_DATA.stream()
-                    //.filter(spawnerData -> !nativeTypes.contains(spawnerData.type))
+                    .filter(spawnerData -> !nativeTypes.contains(spawnerData.type))
                     .forEach(event::addSpawnerData);
         } else if (((Level) level).dimension() == Level.END) {
-            //event.removeSpawnerData(list.stream().filter(spawnerData -> spawnerData.type == ENDERMAN).findFirst().orElse(null));
             END_SPAWNER_DATA.stream()
-                    //.filter(spawnerData -> !nativeTypes.contains(spawnerData.type))
+                    .filter(spawnerData -> !nativeTypes.contains(spawnerData.type))
                     .forEach(event::addSpawnerData);
         }
 

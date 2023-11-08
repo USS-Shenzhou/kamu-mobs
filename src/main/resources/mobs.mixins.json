@@ -9,6 +9,7 @@
     "MobCategoryMixin",
     "NaturalSpawnerMixin",
     "NearestAttackableTargetGoalAccessor",
+    "PiglinSpecificSensorMixin",
     "TargetGoalMixin"
   ],
   "client": [

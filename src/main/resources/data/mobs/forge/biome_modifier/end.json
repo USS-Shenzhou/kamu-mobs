@@ -3,7 +3,7 @@
   "biomes": "#minecraft:is_end",
   "spawners": {
     "type": "mobs:block_pretender",
-    "weight": 15,
+    "weight": 20,
     "minCount": 1,
     "maxCount": 1
   }
