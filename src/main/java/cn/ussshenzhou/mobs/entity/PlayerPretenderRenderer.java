@@ -2,16 +2,14 @@ package cn.ussshenzhou.mobs.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.minecraft.client.model.HumanoidArmorModel;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.*;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.*;
 import net.minecraft.client.renderer.entity.layers.*;
-import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -19,10 +17,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.player.PlayerModelPart;
-import net.minecraft.world.item.CrossbowItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.*;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Score;
@@ -36,7 +33,7 @@ public class PlayerPretenderRenderer extends LivingEntityRenderer<PlayerPretende
     public PlayerPretenderRenderer(EntityRendererProvider.Context pContext, boolean pUseSlimModel) {
         super(pContext, new PlayerPretenderModel(pContext.bakeLayer(pUseSlimModel ? ModelLayers.PLAYER_SLIM : ModelLayers.PLAYER), pUseSlimModel), 0.5F);
         this.addLayer(new HumanoidArmorLayer<>(this, new HumanoidArmorModel(pContext.bakeLayer(pUseSlimModel ? ModelLayers.PLAYER_SLIM_INNER_ARMOR : ModelLayers.PLAYER_INNER_ARMOR)), new HumanoidArmorModel(pContext.bakeLayer(pUseSlimModel ? ModelLayers.PLAYER_SLIM_OUTER_ARMOR : ModelLayers.PLAYER_OUTER_ARMOR)), pContext.getModelManager()));
-        //this.addLayer(new PlayerItemInHandLayer<>(this, pContext.getItemInHandRenderer()))
+        this.addLayer(new ItemInHandLayer<>(this, pContext.getItemInHandRenderer()));
         this.addLayer(new ArrowLayer<>(pContext, this));
         //this.addLayer(new Deadmau5EarsLayer(this));
         //this.addLayer(new CapeLayer(this));
@@ -218,5 +215,39 @@ public class PlayerPretenderRenderer extends LivingEntityRenderer<PlayerPretende
             super.setupRotations(pEntityLiving, pPoseStack, pAgeInTicks, pRotationYaw, pPartialTicks);
         }
 
+    }
+
+    public static class ItemInHandLayer<T extends PlayerPretender, M extends EntityModel<T> & ArmedModel & HeadedModel> extends net.minecraft.client.renderer.entity.layers.ItemInHandLayer<T, M> {
+        private final ItemInHandRenderer itemInHandRenderer;
+        private static final float X_ROT_MIN = (-(float)Math.PI / 6F);
+        private static final float X_ROT_MAX = ((float)Math.PI / 2F);
+
+        public ItemInHandLayer(RenderLayerParent<T, M> pRenderer, ItemInHandRenderer pItemInHandRenderer) {
+            super(pRenderer, pItemInHandRenderer);
+            this.itemInHandRenderer = pItemInHandRenderer;
+        }
+
+        protected void renderArmWithItem(LivingEntity pLivingEntity, ItemStack pItemStack, ItemDisplayContext pDisplayContext, HumanoidArm pArm, PoseStack pPoseStack, MultiBufferSource pBuffer, int pPackedLight) {
+            if (pItemStack.is(Items.SPYGLASS) && pLivingEntity.getUseItem() == pItemStack && pLivingEntity.swingTime == 0) {
+                this.renderArmWithSpyglass(pLivingEntity, pItemStack, pArm, pPoseStack, pBuffer, pPackedLight);
+            } else {
+                super.renderArmWithItem(pLivingEntity, pItemStack, pDisplayContext, pArm, pPoseStack, pBuffer, pPackedLight);
+            }
+
+        }
+
+        private void renderArmWithSpyglass(LivingEntity pEntity, ItemStack pStack, HumanoidArm pArm, PoseStack pPoseStack, MultiBufferSource pBuffer, int pCombinedLight) {
+            pPoseStack.pushPose();
+            ModelPart modelpart = this.getParentModel().getHead();
+            float f = modelpart.xRot;
+            modelpart.xRot = Mth.clamp(modelpart.xRot, (-(float)Math.PI / 6F), ((float)Math.PI / 2F));
+            modelpart.translateAndRotate(pPoseStack);
+            modelpart.xRot = f;
+            CustomHeadLayer.translateToHead(pPoseStack, false);
+            boolean flag = pArm == HumanoidArm.LEFT;
+            pPoseStack.translate((flag ? -2.5F : 2.5F) / 16.0F, -0.0625F, 0.0F);
+            this.itemInHandRenderer.renderItem(pEntity, pStack, ItemDisplayContext.HEAD, false, pPoseStack, pBuffer, pCombinedLight);
+            pPoseStack.popPose();
+        }
     }
 }
