@@ -3,7 +3,6 @@ package cn.ussshenzhou.mobs.entity;
 import cn.ussshenzhou.mobs.Mobs;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -15,7 +14,7 @@ import net.minecraftforge.client.model.data.ModelData;
 /**
  * @author USS_Shenzhou
  */
-public class BlockPretenderRenderer extends MobRenderer<BlockPretenderEntity, BlockPretenderModel<BlockPretenderEntity>> {
+public class BlockPretenderRenderer extends MobRenderer<BlockPretender, BlockPretenderModel<BlockPretender>> {
     public static final ResourceLocation TEXTURE = new ResourceLocation(Mobs.MODID, "textures/entity/block_pretender.png");
 
     public BlockPretenderRenderer(EntityRendererProvider.Context pContext) {
@@ -23,13 +22,13 @@ public class BlockPretenderRenderer extends MobRenderer<BlockPretenderEntity, Bl
     }
 
     @Override
-    public ResourceLocation getTextureLocation(BlockPretenderEntity pEntity) {
+    public ResourceLocation getTextureLocation(BlockPretender pEntity) {
         return TEXTURE;
     }
 
     @Override
-    public void render(BlockPretenderEntity entity, float pEntityYaw, float pPartialTicks, PoseStack poseStack, MultiBufferSource pBuffer, int pPackedLight) {
-        if (entity.getEntityData().get(BlockPretenderEntity.PRETENDING)) {
+    public void render(BlockPretender entity, float pEntityYaw, float pPartialTicks, PoseStack poseStack, MultiBufferSource pBuffer, int pPackedLight) {
+        if (entity.getEntityData().get(BlockPretender.PRETENDING)) {
             poseStack.pushPose();
             poseStack.translate(-0.5, 0, -0.5);
             var blockRenderer = Minecraft.getInstance().getBlockRenderer();

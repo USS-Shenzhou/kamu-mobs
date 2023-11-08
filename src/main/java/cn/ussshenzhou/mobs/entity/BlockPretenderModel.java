@@ -16,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * @author USS_Shenzhou
  */
-public class BlockPretenderModel<T extends BlockPretenderEntity> extends HierarchicalModel<T> {
+public class BlockPretenderModel<T extends BlockPretender> extends HierarchicalModel<T> {
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(Mobs.MODID, "block_pretender"), "main");
 
     private final ModelPart group2;

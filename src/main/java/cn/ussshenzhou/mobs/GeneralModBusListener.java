@@ -1,9 +1,9 @@
 package cn.ussshenzhou.mobs;
 
-import cn.ussshenzhou.mobs.entity.BlockPretenderEntity;
+import cn.ussshenzhou.mobs.entity.BlockPretender;
+import cn.ussshenzhou.mobs.entity.PlayerPretender;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
@@ -24,11 +24,13 @@ public class GeneralModBusListener {
 
     @SubscribeEvent
     public static void addAttribute(EntityAttributeCreationEvent event) {
-        event.put(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), BlockPretenderEntity.createAttributes().build());
+        event.put(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), BlockPretender.createAttributes().build());
+        event.put(Mobs.PLAYER_PRETENDER_ENTITY_TYPE.get(), PlayerPretender.createAttributes().build());
     }
 
     @SubscribeEvent
     public static void addSpawn(SpawnPlacementRegisterEvent event) {
-        event.register(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BlockPretenderEntity::canSpawn, SpawnPlacementRegisterEvent.Operation.OR);
+        event.register(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BlockPretender::canSpawn, SpawnPlacementRegisterEvent.Operation.OR);
+        event.register(Mobs.PLAYER_PRETENDER_ENTITY_TYPE.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, PlayerPretender::canSpawn, SpawnPlacementRegisterEvent.Operation.OR);
     }
 }

@@ -8,7 +8,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
@@ -36,11 +35,11 @@ import java.util.HashMap;
 /**
  * @author USS_Shenzhou
  */
-public class BlockPretenderEntity extends PathfinderMob {
-    public static final EntityDataAccessor<Boolean> PRETENDING = SynchedEntityData.defineId(BlockPretenderEntity.class, EntityDataSerializers.BOOLEAN);
+public class BlockPretender extends PathfinderMob {
+    public static final EntityDataAccessor<Boolean> PRETENDING = SynchedEntityData.defineId(BlockPretender.class, EntityDataSerializers.BOOLEAN);
     private final HashMap<Integer, Goal> TARGET_GOALS = new HashMap<>();
 
-    public BlockPretenderEntity(EntityType<BlockPretenderEntity> pEntityType, Level pLevel) {
+    public BlockPretender(EntityType<BlockPretender> pEntityType, Level pLevel) {
         super(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), pLevel);
         TARGET_GOALS.put(-3, new HurtByTargetGoal(this));
         TARGET_GOALS.put(-2, new PriorityAttackHoldingLightSourceTargetGoal(this));
@@ -56,7 +55,7 @@ public class BlockPretenderEntity extends PathfinderMob {
                 .add(Attributes.MAX_HEALTH, 20);
     }
 
-    public static boolean canSpawn(EntityType<BlockPretenderEntity> pType, LevelAccessor pLevel, MobSpawnType pSpawnType, BlockPos pPos, RandomSource pRandom) {
+    public static boolean canSpawn(EntityType<BlockPretender> pType, LevelAccessor pLevel, MobSpawnType pSpawnType, BlockPos pPos, RandomSource pRandom) {
         return pLevel.getDifficulty() != Difficulty.PEACEFUL && checkMobSpawnRules(pType, pLevel, pSpawnType, pPos, pRandom);
     }
 
