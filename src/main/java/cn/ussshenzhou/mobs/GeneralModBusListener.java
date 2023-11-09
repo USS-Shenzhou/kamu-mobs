@@ -2,6 +2,7 @@ package cn.ussshenzhou.mobs;
 
 import cn.ussshenzhou.mobs.entity.BlockPretender;
 import cn.ussshenzhou.mobs.entity.PlayerPretender;
+import cn.ussshenzhou.t88.config.ConfigHelper;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -10,6 +11,7 @@ import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 
 /**
  * @author USS_Shenzhou
@@ -32,5 +34,10 @@ public class GeneralModBusListener {
     public static void addSpawn(SpawnPlacementRegisterEvent event) {
         event.register(Mobs.BLOCK_PRETENDER_ENTITY_TYPE.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BlockPretender::canSpawn, SpawnPlacementRegisterEvent.Operation.OR);
         event.register(Mobs.PLAYER_PRETENDER_ENTITY_TYPE.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, PlayerPretender::canSpawn, SpawnPlacementRegisterEvent.Operation.OR);
+    }
+
+    @SubscribeEvent
+    public static void loadConfig(FMLCommonSetupEvent event) {
+        ConfigHelper.loadConfig(new MobsConfig());
     }
 }

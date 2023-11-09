@@ -1,7 +1,10 @@
 package cn.ussshenzhou.mobs;
 
+import cn.ussshenzhou.madparticle.command.MadParticleCommand;
 import cn.ussshenzhou.mobs.ai.*;
 import cn.ussshenzhou.mobs.mixin.NearestAttackableTargetGoalAccessor;
+import cn.ussshenzhou.t88.config.ConfigHelper;
+import net.minecraft.commands.Commands;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,6 +24,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraftforge.common.Tags;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
@@ -165,7 +169,7 @@ public class GeneralForgeBusListener {
                         animal.getAttribute(Attributes.ARMOR).setBaseValue(4);
                     }
                     animal.goalSelector.addGoal(-3, new MeleeAttackGoal(animal, 1, true));
-                    animal.goalSelector.addGoal(-1, new MoveTowardsTargetGoal(animal, 0.8, 32));
+                    //animal.goalSelector.addGoal(-1, new MoveTowardsTargetGoal(animal, 0.8, 32));
                     if (animal instanceof AbstractVillager villager) {
                         villager.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(4);
                         villager.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(villager.getAttribute(Attributes.MOVEMENT_SPEED).getBaseValue() * 0.8);
@@ -339,7 +343,7 @@ public class GeneralForgeBusListener {
     public static void onPlayerHurt(LivingHurtEvent event) {
         if (event.getEntity() instanceof ServerPlayer) {
             if (HEAVIER_DAMAGE.stream().anyMatch(damageTypeResourceKey -> event.getSource().is(damageTypeResourceKey))) {
-                event.setAmount(event.getAmount() * 2);
+                event.setAmount((float) (event.getAmount() * ConfigHelper.getConfigRead(MobsConfig.class).mobDamageFactor));
             }
         }
     }
@@ -347,7 +351,21 @@ public class GeneralForgeBusListener {
     @SubscribeEvent
     public static void onPlayerKnockBack(LivingKnockBackEvent event) {
         if (event.getEntity() instanceof ServerPlayer) {
-            event.setStrength(event.getStrength() + 1.5f);
+            event.setStrength((float) (event.getStrength() + ConfigHelper.getConfigRead(MobsConfig.class).mobKnockBackPlus));
         }
+    }
+
+    @SubscribeEvent
+    public static void regCommand(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands
+                .literal("start")
+                .executes(context -> {
+                    var s = context.getSource();
+                    var c = s.getServer().getCommands();
+                    c.performPrefixedCommand(s, "/time set midnight");
+                    c.performPrefixedCommand(s, "/difficulty hard");
+                    c.performPrefixedCommand(s, "/gamerule doDaylightCycle false");
+                    return 1;
+                }));
     }
 }

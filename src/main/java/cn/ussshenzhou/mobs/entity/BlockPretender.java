@@ -63,7 +63,6 @@ public class BlockPretender extends PathfinderMob {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new MeleeAttackGoal(this, 1, true));
-        this.goalSelector.addGoal(1, new MoveTowardsTargetGoal(this, 0.8, 32));
     }
 
     @Override

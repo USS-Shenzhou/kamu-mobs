@@ -35,6 +35,9 @@ public class ClientForgeBusListener {
     public static void darker(RenderLevelStageEvent event) {
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
             var minecraft = Minecraft.getInstance();
+            if (minecraft.player == null || minecraft.player.isSpectator()) {
+                return;
+            }
             if (darkerPostShaderChain == null) {
                 try {
                     darkerPostShaderChain = new PostChain(minecraft.getTextureManager(), minecraft.getResourceManager(), minecraft.getMainRenderTarget(), DARKER_SHADER);

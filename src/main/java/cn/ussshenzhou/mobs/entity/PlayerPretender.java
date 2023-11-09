@@ -1,6 +1,8 @@
 package cn.ussshenzhou.mobs.entity;
 
 import cn.ussshenzhou.mobs.Mobs;
+import cn.ussshenzhou.mobs.ai.MoveToUsableBlockGoal;
+import cn.ussshenzhou.mobs.ai.PriorityAttackHoldingLightSourceTargetGoal;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.BlockPos;
@@ -10,12 +12,18 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -24,6 +32,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraftforge.api.distmarker.Dist;
@@ -42,10 +52,25 @@ public class PlayerPretender extends PathfinderMob {
     protected Vec3 deltaMovementOnPreviousTick = Vec3.ZERO;
     public static final UUID BACKUP_UUID = UUID.fromString("055ae906-5e48-4077-8470-6254c15077b7");
 
+    private final MeleeAttackGoal meleeAttackGoal = new MeleeAttackGoal(this, 1, true);
+    //private final MoveTowardsTargetGoal moveTowardsTargetGoal = new MoveTowardsTargetGoal(this, 1, 32);
+    private final MoveToUsableBlockGoal moveToUsableBlockGoal = new MoveToUsableBlockGoal(this);
+    private final OpenDoorGoal openDoorGoal = new OpenDoorGoal(this, false);
+    private final RandomLookAroundGoal randomLookAroundGoal = new RandomLookAroundGoal(this);
+    private final WaterAvoidingRandomStrollGoal waterAvoidingRandomStrollGoal = new WaterAvoidingRandomStrollGoal(this, 1);
+
+    private final HurtByTargetGoal hurtByTargetGoal = new HurtByTargetGoal(this);
+    private final PriorityAttackHoldingLightSourceTargetGoal priorityAttackHoldingLightSourceTargetGoal = new PriorityAttackHoldingLightSourceTargetGoal(this);
+    private final NearestAttackableTargetGoal<?> nearestAttackableTargetGoal = new NearestAttackableTargetGoal<>(this, Player.class, false);
+
     public PlayerPretender(EntityType<PlayerPretender> pEntityType, Level pLevel) {
         super(Mobs.PLAYER_PRETENDER_ENTITY_TYPE.get(), pLevel);
+        this.goalSelector.addGoal(0, meleeAttackGoal);
+        this.goalSelector.addGoal(2, moveToUsableBlockGoal);
+        this.goalSelector.addGoal(3, openDoorGoal);
+        this.goalSelector.addGoal(4, randomLookAroundGoal);
+        this.goalSelector.addGoal(5, waterAvoidingRandomStrollGoal);
     }
-
 
     @Nullable
     @Override
@@ -65,7 +90,7 @@ public class PlayerPretender extends PathfinderMob {
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
                 .add(Attributes.FOLLOW_RANGE, 35.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.4)
+                .add(Attributes.MOVEMENT_SPEED, 0.3)
                 .add(Attributes.ATTACK_DAMAGE, 2)
                 .add(Attributes.ARMOR, 6)
                 .add(Attributes.MAX_HEALTH, 20);
@@ -75,6 +100,60 @@ public class PlayerPretender extends PathfinderMob {
     public void tick() {
         super.tick();
         this.deltaMovementOnPreviousTick = this.getDeltaMovement();
+        if (!level().isClientSide()) {
+            if (tickCount % 20 == 0) {
+                var player = level().getNearestPlayer(TargetingConditions.DEFAULT, this, this.getX(), this.getEyeY(), this.getZ());
+                if (player != null) {
+                    var d2 = this.getEyePosition().distanceToSqr(player.position());
+                    float threshold = 0;
+                    if (d2 <= 4 * 4) {
+                        threshold = 0.2f;
+                    } else if (d2 <= 16 * 16) {
+                        threshold = 0.04f;
+                    } else if (d2 <= 32 * 32) {
+                        threshold = 0.02f;
+                    }
+                    if (random.nextFloat() < threshold) {
+                        mayActivate();
+                    }
+                }
+            }
+            if (activating) {
+                if (getTarget() != null) {
+                    this.playSound(SoundEvents.ITEM_BREAK, 1, 1);
+                    //TODO particle
+                    getEntityData().set(PRETENDING, false);
+                    activating = false;
+                }
+            }
+        }
+    }
+
+    private void mayActivate() {
+        if (getEntityData().get(PRETENDING)) {
+            this.activate();
+        }
+    }
+
+
+    private boolean activating = false;
+
+    @Override
+    public boolean hurt(DamageSource pSource, float pAmount) {
+        var r = super.hurt(pSource, pAmount);
+        if (r) {
+            if (getEntityData().get(PRETENDING)) {
+                this.activate();
+            }
+        }
+        return r;
+    }
+
+    private void activate() {
+        this.targetSelector.addGoal(0, hurtByTargetGoal);
+        this.targetSelector.addGoal(1, priorityAttackHoldingLightSourceTargetGoal);
+        this.targetSelector.addGoal(2, nearestAttackableTargetGoal);
+        activating = true;
     }
 
     public static boolean canSpawn(EntityType<PlayerPretender> pType, LevelAccessor pLevel, MobSpawnType pSpawnType, BlockPos pPos, RandomSource pRandom) {
@@ -199,7 +278,9 @@ public class PlayerPretender extends PathfinderMob {
     @Override
     public void readAdditionalSaveData(CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
-        getEntityData().set(PRETENDED_PLAYER, Optional.of(pCompound.getUUID("pretended_player")));
+        if (pCompound.hasUUID("pretended_player")) {
+            getEntityData().set(PRETENDED_PLAYER, Optional.of(pCompound.getUUID("pretended_player")));
+        }
     }
 
     @OnlyIn(Dist.CLIENT)
