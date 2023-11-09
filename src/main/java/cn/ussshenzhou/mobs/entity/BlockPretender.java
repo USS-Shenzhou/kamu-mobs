@@ -44,6 +44,7 @@ public class BlockPretender extends PathfinderMob {
         TARGET_GOALS.put(-3, new HurtByTargetGoal(this));
         TARGET_GOALS.put(-2, new PriorityAttackHoldingLightSourceTargetGoal(this));
         TARGET_GOALS.put(-1, new NearestAttackableTargetGoal<>(this, Player.class, false));
+        this.xpReward = 10;
     }
 
     public static AttributeSupplier.Builder createAttributes() {

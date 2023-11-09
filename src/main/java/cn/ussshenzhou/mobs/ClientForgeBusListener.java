@@ -1,7 +1,5 @@
 package cn.ussshenzhou.mobs;
 
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.resources.ResourceLocation;
@@ -9,10 +7,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.lwjgl.opengl.GL42C;
-import org.lwjgl.opengl.GL43C;
-import org.lwjgl.opengl.GL46;
-import org.lwjgl.opengl.GL46C;
 
 import java.io.IOException;
 

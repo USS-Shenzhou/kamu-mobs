@@ -1,13 +1,9 @@
 package cn.ussshenzhou.mobs.entity;
 
-import cn.ussshenzhou.madparticle.particle.MadParticleOption;
-import cn.ussshenzhou.madparticle.util.AddParticleHelper;
 import cn.ussshenzhou.mobs.Mobs;
 import cn.ussshenzhou.mobs.ai.MoveToUsableBlockGoal;
 import cn.ussshenzhou.mobs.ai.PriorityAttackHoldingLightSourceTargetGoal;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -24,7 +20,10 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
@@ -36,8 +35,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraftforge.api.distmarker.Dist;
@@ -74,6 +71,7 @@ public class PlayerPretender extends PathfinderMob {
         this.goalSelector.addGoal(3, openDoorGoal);
         this.goalSelector.addGoal(4, randomLookAroundGoal);
         this.goalSelector.addGoal(5, waterAvoidingRandomStrollGoal);
+        this.xpReward = 10;
     }
 
     @Nullable
@@ -309,7 +307,6 @@ public class PlayerPretender extends PathfinderMob {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     ResourceLocation skin = null;
 
     @OnlyIn(Dist.CLIENT)
