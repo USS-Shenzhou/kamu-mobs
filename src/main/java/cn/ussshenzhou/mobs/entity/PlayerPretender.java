@@ -1,10 +1,13 @@
 package cn.ussshenzhou.mobs.entity;
 
+import cn.ussshenzhou.madparticle.particle.MadParticleOption;
+import cn.ussshenzhou.madparticle.util.AddParticleHelper;
 import cn.ussshenzhou.mobs.Mobs;
 import cn.ussshenzhou.mobs.ai.MoveToUsableBlockGoal;
 import cn.ussshenzhou.mobs.ai.PriorityAttackHoldingLightSourceTargetGoal;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -12,6 +15,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
@@ -91,7 +95,7 @@ public class PlayerPretender extends PathfinderMob {
         return Monster.createMonsterAttributes()
                 .add(Attributes.FOLLOW_RANGE, 35.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3)
-                .add(Attributes.ATTACK_DAMAGE, 2)
+                .add(Attributes.ATTACK_DAMAGE, 1)
                 .add(Attributes.ARMOR, 6)
                 .add(Attributes.MAX_HEALTH, 20);
     }
@@ -107,7 +111,7 @@ public class PlayerPretender extends PathfinderMob {
                     var d2 = this.getEyePosition().distanceToSqr(player.position());
                     float threshold = 0;
                     if (d2 <= 4 * 4) {
-                        threshold = 0.2f;
+                        threshold = 0.1f;
                     } else if (d2 <= 16 * 16) {
                         threshold = 0.04f;
                     } else if (d2 <= 32 * 32) {
@@ -121,12 +125,34 @@ public class PlayerPretender extends PathfinderMob {
             if (activating) {
                 if (getTarget() != null) {
                     this.playSound(SoundEvents.ITEM_BREAK, 1, 1);
-                    //TODO particle
                     getEntityData().set(PRETENDING, false);
+                    addActivateParticle();
                     activating = false;
                 }
             }
         }
+    }
+
+    private void addActivateParticle() {
+        var server = ((ServerLevel) level()).getServer();
+        var pos = this.position().add(0, 0.9, 0);
+        StringBuilder command = new StringBuilder("/mp");
+        var name = pretendedPlayer().map(player -> player.getGameProfile().getName()).orElse("");
+        if (name.contains("BadCen")) {
+            command.append(" madparticle:badcen");
+        } else if (name.contains("Melor_")) {
+            command.append(" madparticle:melor");
+        } else if (name.contains("Uncle_Red")) {
+            command.append(" madparticle:uncle_red");
+        } else if (name.contains("Hei_Mao")) {
+            command.append(" madparticle:heimao");
+        } else {
+            command.append(" madparticle:kamuamua");
+        }
+        command.append(" RANDOM 80 TRUE 75");
+        command.append(String.format(" %f %f %f", pos.x, pos.y, pos.z));
+        command.append(" 0.4 0.9 0.4 0.0 0.05 0.0 0.15 0.1 0.15 TRUE 1 0 0 0.9 0.9 0.3 0.3 0.0 0.0 0.0 0.0 0 FALSE 0 0 PARTICLE_SHEET_TRANSLUCENT 1.000 1.000 1.000 0 1 1 LINEAR 1 1 LINEAR @a {}");
+        server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), command.toString());
     }
 
     private void mayActivate() {
