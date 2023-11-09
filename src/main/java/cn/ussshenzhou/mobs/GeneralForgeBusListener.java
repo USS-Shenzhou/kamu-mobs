@@ -5,6 +5,7 @@ import cn.ussshenzhou.mobs.ai.*;
 import cn.ussshenzhou.mobs.mixin.NearestAttackableTargetGoalAccessor;
 import cn.ussshenzhou.t88.config.ConfigHelper;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,6 +19,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.animal.Cat;
+import net.minecraft.world.entity.animal.CatVariant;
 import net.minecraft.world.entity.animal.Rabbit;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
@@ -323,9 +326,28 @@ public class GeneralForgeBusListener {
         checkAndAward(event, player, "BadCen", "end_new_neighbors", (e, p) -> e.getTo() == Level.END);
     }
 
+    @SubscribeEvent
+    public static void onHurtBy(LivingHurtEvent event) {
+        var level = event.getEntity().level();
+        if (level.isClientSide()) {
+            return;
+        }
+        var to = event.getEntity();
+        if (!(to instanceof ServerPlayer player)) {
+            return;
+        }
+        var from = event.getSource().getEntity();
+        if (from == null) {
+            return;
+        }
+        checkAndAward(event, player, "Melor_", "panda_attack", (e, p) -> from.getType() == PANDA);
+        checkAndAward(event, player, "Uncle_Red", "rabbit_attack", (e, p) -> from.getType() == RABBIT);
+        checkAndAward(event, player, "Hei_Mao", "cat_attack", (e, p) -> from.getType() == CAT && ((Cat) from).getVariant().toString().contains("black"));
+    }
+
     private static <T> void checkAndAward(T context, ServerPlayer player, String playerName, String advancementName, BiPredicate<T, ServerPlayer> predicate) {
         var n = player.getGameProfile().getName();
-        if (n.equals(playerName) || "Dev".equals(n)) {
+        if (n.contains(playerName) || "Dev".equals(n)) {
             if (predicate.test(context, player)) {
                 var a = player.serverLevel().getServer().getAdvancements().getAdvancement(new ResourceLocation("minecraft:story/" + advancementName));
                 if (a != null) {
