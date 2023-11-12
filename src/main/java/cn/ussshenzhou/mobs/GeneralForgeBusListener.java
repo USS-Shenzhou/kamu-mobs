@@ -85,7 +85,7 @@ public class GeneralForgeBusListener {
     public static final HashMap<EntityType<?>, Integer> OVER_WORLD_POTENTIAL_SPAWNS = new HashMap<>();
 
     static {
-        putAdditionalPotential(OVER_WORLD_POTENTIAL_SPAWNS, 20, SHULKER);
+        //putAdditionalPotential(OVER_WORLD_POTENTIAL_SPAWNS, 20, SHULKER);
         OVER_WORLD_POTENTIAL_SPAWNS.forEach((type, weight) -> OVER_WORLD_SPAWNER_DATA.add(spawnerData(type, weight)));
     }
 
@@ -103,7 +103,7 @@ public class GeneralForgeBusListener {
 
     static {
         putAdditionalPotential(END_POTENTIAL_SPAWNS, 500, ENDERMAN);
-        putAdditionalPotential(END_POTENTIAL_SPAWNS, 100, SHULKER);
+        //putAdditionalPotential(END_POTENTIAL_SPAWNS, 100, SHULKER);
         END_POTENTIAL_SPAWNS.forEach((type, weight) -> END_SPAWNER_DATA.add(spawnerData(type, weight)));
     }
 
