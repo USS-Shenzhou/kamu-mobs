@@ -5,12 +5,14 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "mobs.refmap.json",
   "mixins": [
+    "AbstractSkeletonMixin",
     "FoxMixin",
     "MobCategoryMixin",
     "NaturalSpawnerMixin",
     "NearestAttackableTargetGoalAccessor",
     "PiglinSpecificSensorMixin",
-    "TargetGoalMixin"
+    "TargetGoalMixin",
+    "ZombieMixin"
   ],
   "client": [
     "LevelRendererMixin",
