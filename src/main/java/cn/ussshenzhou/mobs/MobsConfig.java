@@ -13,4 +13,5 @@ public class MobsConfig implements TConfig {
     public double mobAmountFactor = 3;
     public double mobDamageFactor = 2;
     public double mobKnockBackPlus = 1.5;
+    public float nightDarkness = 0.05f;
 }

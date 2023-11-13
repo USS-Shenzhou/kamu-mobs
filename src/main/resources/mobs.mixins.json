@@ -15,7 +15,9 @@
     "ZombieMixin"
   ],
   "client": [
+    "ClientLevelMixin",
     "LevelRendererMixin",
+    "LightTextureMixin",
     "MinecraftMixin"
   ],
   "injectors": {
