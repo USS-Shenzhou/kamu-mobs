@@ -253,7 +253,7 @@ public class GeneralForgeBusListener {
     public static void addBreakGoal(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide && event.getEntity() instanceof PathfinderMob mob) {
             if (BREAK_BLOCK.contains(mob.getType())) {
-                mob.goalSelector.addGoal(1, new BreakBlockGoal(mob));
+                mob.goalSelector.addGoal(0, new BreakBlockGoal(mob));
             }
         }
     }

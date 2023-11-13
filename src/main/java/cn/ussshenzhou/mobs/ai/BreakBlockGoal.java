@@ -2,6 +2,7 @@ package cn.ussshenzhou.mobs.ai;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.BreakDoorGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.util.GoalUtils;
@@ -11,6 +12,7 @@ import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -24,6 +26,7 @@ public class BreakBlockGoal extends BreakDoorGoal {
 
         super(pMob, (o) -> true);
         this.doorBreakTime = 24 * 20;
+        this.setFlags(EnumSet.of(Flag.LOOK, Flag.MOVE, Flag.JUMP));
     }
 
     @Override
@@ -33,19 +36,22 @@ public class BreakBlockGoal extends BreakDoorGoal {
         } else {
             GroundPathNavigation groundpathnavigation = (GroundPathNavigation) this.mob.getNavigation();
             Path path = groundpathnavigation.getPath();
-            if (path != null && !path.isDone()) {
-                for (int i = 0; i < Math.min(path.getNextNodeIndex() + 2, path.getNodeCount()); ++i) {
-                    Node node = path.getNode(i);
-                    this.doorPos = new BlockPos(node.x, node.y + 1, node.z);
-                    if (this.breakable()) {
-                        return true;
+            if (path != null) {
+                if (!path.isDone()) {
+                    for (int i = 0; i < Math.min(path.getNextNodeIndex() + 2, path.getNodeCount()); ++i) {
+                        Node node = path.getNode(i);
+                        this.doorPos = new BlockPos(node.x, node.y + 1, node.z);
+                        if (this.breakable()) {
+                            return true;
+                        }
+                        this.doorPos = new BlockPos(node.x, node.y, node.z);
+                        if (this.breakable()) {
+                            return true;
+                        }
                     }
-                    this.doorPos = new BlockPos(node.x, node.y, node.z);
-                    if (this.breakable()) {
-                        return true;
-                    }
-                }
 
+                }
+            } else {
                 if (mob.getTarget() != null) {
                     var direction = mob.getTarget().position().subtract(mob.position()).normalize().scale(0.9);
                     for (int angle : anglesToAttemptBreak) {
@@ -63,13 +69,11 @@ public class BreakBlockGoal extends BreakDoorGoal {
                         }
                     }
                 }
-
                 this.doorPos = this.mob.blockPosition().above();
                 return this.breakable();
-            } else {
-                return false;
             }
         }
+        return false;
     }
 
     private boolean breakable() {
@@ -80,12 +84,13 @@ public class BreakBlockGoal extends BreakDoorGoal {
         return false;
     }
 
+    double speedBuffer;
+
     @Override
     public void start() {
         super.start();
-        mob.goalSelector.enableControlFlag(Flag.MOVE);
-        mob.goalSelector.enableControlFlag(Flag.LOOK);
-        mob.goalSelector.enableControlFlag(Flag.JUMP);
+        speedBuffer = mob.getAttribute(Attributes.MOVEMENT_SPEED).getBaseValue();
+        mob.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0);
     }
 
     @Override
@@ -95,15 +100,14 @@ public class BreakBlockGoal extends BreakDoorGoal {
 
     @Override
     public boolean canContinueToUse() {
-        return this.breakTime > this.getDoorBreakTime() && !(this.mob.distanceToSqr(this.doorPos.getX(), this.doorPos.getY(), this.doorPos.getZ()) > 4);
+        return this.isOpen() || (this.breakTime < this.getDoorBreakTime() && this.mob.distanceToSqr(this.doorPos.getX(), this.doorPos.getY(), this.doorPos.getZ()) < 4);
     }
 
     @Override
     public void stop() {
+        mob.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(speedBuffer);
         mob.getNavigation().stop();
-        mob.goalSelector.disableControlFlag(Flag.MOVE);
-        mob.goalSelector.disableControlFlag(Flag.LOOK);
-        mob.goalSelector.disableControlFlag(Flag.JUMP);
+        this.mob.level().destroyBlockProgress(this.mob.getId(), this.doorPos, -1);
     }
 
     @Override

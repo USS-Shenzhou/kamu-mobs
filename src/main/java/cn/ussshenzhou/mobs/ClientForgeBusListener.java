@@ -15,7 +15,7 @@ import java.io.IOException;
  */
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ClientForgeBusListener {
-    private static final ResourceLocation DARKER_SHADER = new ResourceLocation("shaders/post/darker.json");
+    /*private static final ResourceLocation DARKER_SHADER = new ResourceLocation("shaders/post/darker.json");
     private static PostChain darkerPostShaderChain = null;
 
     public static void resize() {
@@ -43,5 +43,5 @@ public class ClientForgeBusListener {
                 minecraft.getMainRenderTarget().bindWrite(false);
             }
         }
-    }
+    }*/
 }

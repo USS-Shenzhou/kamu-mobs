@@ -16,6 +16,6 @@ public class MinecraftMixin {
 
     @Inject(method = "resizeDisplay", at = @At("RETURN"))
     private void onResize(CallbackInfo ci) {
-        ClientForgeBusListener.resize();
+        //ClientForgeBusListener.resize();
     }
 }
