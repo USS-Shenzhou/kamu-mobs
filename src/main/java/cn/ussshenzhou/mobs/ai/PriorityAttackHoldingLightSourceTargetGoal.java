@@ -49,6 +49,9 @@ public class PriorityAttackHoldingLightSourceTargetGoal extends NearestAttackabl
     }
 
     private double getAttractionFactor(Player player) {
-        return mob.distanceToSqr(player) - Math.max(LIGHT_SOURCE_ITEM.get(player.getItemInHand(InteractionHand.MAIN_HAND).getItem()), LIGHT_SOURCE_ITEM.get(player.getItemInHand(InteractionHand.OFF_HAND).getItem()));
+        return mob.distanceToSqr(player) - Math.max(
+                LIGHT_SOURCE_ITEM.getOrDefault(player.getItemInHand(InteractionHand.MAIN_HAND).getItem(), 0),
+                LIGHT_SOURCE_ITEM.getOrDefault(player.getItemInHand(InteractionHand.OFF_HAND).getItem(), 0)
+        );
     }
 }
